@@ -27,7 +27,7 @@ serviceCollection.AddOpenAIService();
 //serviceCollection.AddOpenAIService(options =>
 //{
 //    options.ProviderType = ProviderType.Azure;
-//    options.ApiKey = "Test";
+//    options.ApiKey = "MyApiKey";
 //    options.DeploymentId = "MyDeploymentId";
 //    options.ResourceName = "MyResourceName";
 //});
@@ -43,19 +43,27 @@ var sdk = serviceProvider.GetRequiredService<IOpenAIService>();
 //  |-----------------------------------------------------------------------|
 
 await ChatCompletionTestHelper.RunSimpleChatCompletionTest(sdk);
+// Vision
+//await VisionTestHelper.RunSimpleVisionTest(sdk);
+//await VisionTestHelper.RunSimpleVisionStreamTest(sdk);
+//await VisionTestHelper.RunSimpleVisionTestUsingBase64EncodedImage(sdk);
+
 //await ChatCompletionTestHelper.RunSimpleCompletionStreamTest(sdk);
 //await ChatCompletionTestHelper.RunChatFunctionCallTest(sdk);
+//await ChatCompletionTestHelper.RunChatFunctionCallTestAsStream(sdk);
 //await FineTuningJobTestHelper.RunCaseStudyIsTheModelMakingUntrueStatements(sdk);
+
 // Whisper
 //await AudioTestHelper.RunSimpleAudioCreateTranscriptionTest(sdk);
 //await AudioTestHelper.RunSimpleAudioCreateTranslationTest(sdk);
+//await AudioTestHelper.RunSimpleAudioCreateSpeechTest(sdk);
 
 //await ModelTestHelper.FetchModelsTest(sdk);
 //await EditTestHelper.RunSimpleEditCreateTest(sdk);
 //await ImageTestHelper.RunSimpleCreateImageTest(sdk);
 //await ImageTestHelper.RunSimpleCreateImageEditTest(sdk);
 //await ImageTestHelper.RunSimpleCreateImageVariationTest(sdk);
-await ModerationTestHelper.CreateModerationTest(sdk);
+//await ModerationTestHelper.CreateModerationTest(sdk);
 //await CompletionTestHelper.RunSimpleCompletionTest(sdk);
 //await CompletionTestHelper.RunSimpleCompletionTest2(sdk);
 //await CompletionTestHelper.RunSimpleCompletionTest3(sdk);
@@ -66,8 +74,8 @@ await ModerationTestHelper.CreateModerationTest(sdk);
 //////await FileTestHelper.RunSimpleFileTest(sdk); //will delete all of your files
 //////await FineTuningTestHelper.CleanUpAllFineTunings(sdk); //!!!!! will delete all fine-tunings
 //await FineTuningTestHelper.RunCaseStudyIsTheModelMakingUntrueStatements(sdk);
-await TokenizerTestHelper.RunTokenizerTest();
-await TokenizerTestHelper.RunTokenizerCountTest();
-await TokenizerTestHelper.RunTokenizerTestCrClean();
+//await TokenizerTestHelper.RunTokenizerTest();
+//await TokenizerTestHelper.RunTokenizerCountTest();
+//await TokenizerTestHelper.RunTokenizerTestCrClean();
 
 Console.ReadLine();

@@ -7,6 +7,12 @@ namespace OpenAI.ObjectModels.RequestModels;
 
 public class ChatCompletionCreateRequest : IModelValidate, IOpenAiModels.ITemperature, IOpenAiModels.IModel, IOpenAiModels.IUser
 {
+    public enum ResponseFormats
+    {
+        Text,
+        Json
+    }
+
     /// <summary>
     ///     The messages to generate chat completions for, in the chat format.
     ///     The main input is the messages parameter. Messages must be an array of message objects, where each object has a
@@ -15,28 +21,6 @@ public class ChatCompletionCreateRequest : IModelValidate, IOpenAiModels.ITemper
     /// </summary>
     [JsonPropertyName("messages")]
     public IList<ChatMessage> Messages { get; set; }
-
-    /// <summary>
-    ///     A list of functions the model may generate JSON inputs for.
-    /// </summary>
-    [JsonIgnore]
-    public IList<FunctionDefinition>? Functions { get; set; }
-
-    [JsonIgnore] public object? FunctionsAsObject { get; set; }
-
-    [JsonPropertyName("functions")]
-    public object? FunctionCalculated
-    {
-        get
-        {
-            if (FunctionsAsObject != null && Functions != null)
-            {
-                throw new ValidationException("FunctionAsObject and Functions can not be assigned at the same time. One of them is should be null.");
-            }
-
-            return Functions ?? FunctionsAsObject;
-        }
-    }
 
     /// <summary>
     ///     An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the
@@ -86,7 +70,7 @@ public class ChatCompletionCreateRequest : IModelValidate, IOpenAiModels.ITemper
 
             if (Stop != null)
             {
-                return new List<string> {Stop};
+                return new List<string> { Stop };
             }
 
             return StopAsList;
@@ -132,19 +116,122 @@ public class ChatCompletionCreateRequest : IModelValidate, IOpenAiModels.ITemper
     [JsonPropertyName("logit_bias")]
     public object? LogitBias { get; set; }
 
+    /// <summary>
+    ///     A list of functions the model may generate JSON inputs for.
+    /// </summary>
+    [JsonIgnore]
+    public IList<ToolDefinition>? Tools { get; set; }
+
+
+    [JsonIgnore] public object? ToolsAsObject { get; set; }
 
     /// <summary>
-    ///     String or object. Controls how the model responds to function calls.
-    ///     "none" means the model does not call a function, and responds to the end-user.
-    ///     "auto" means the model can pick between an end-user or calling a function.
-    ///     "none" is the default when no functions are present. "auto" is the default if functions are present.
-    ///     Specifying a particular function via {"name": "my_function"} forces the model to call that function.
-    ///     (Note: in C# specify that as:
-    ///     FunctionCall = new Dictionary&lt;string, string&gt; { { "name", "my_function" } }
-    ///     ).
+    ///     A list of tools the model may call. Currently, only functions are supported as a tool. Use this to provide a list
+    ///     of functions the model may generate JSON inputs for.
     /// </summary>
-    [JsonPropertyName("function_call")]
-    public object? FunctionCall { get; set; }
+    [JsonPropertyName("tools")] public object? ToolsCalculated
+    {
+        get
+        {
+            if (ToolsAsObject != null && Tools != null)
+            {
+                throw new ValidationException("ToolsAsObject and Tools can not be assigned at the same time. One of them is should be null.");
+            }
+
+            return Tools ?? ToolsAsObject;
+        }
+    }
+
+    /// <summary>
+    ///     Controls which (if any) function is called by the model. none means the model will not call a function and instead
+    ///     generates a message. auto means the model can pick between generating a message or calling a function. Specifying
+    ///     a particular function via {"type: "function", "function": {"name": "my_function"}} forces the model to call that
+    ///     function.
+    ///     none is the default when no functions are present. auto is the default if functions are present.
+    /// </summary>
+    [JsonIgnore]
+    public ToolChoice? ToolChoice { get; set; }
+
+    [JsonPropertyName("tool_choice")]
+    public object? ToolChoiceCalculated
+    {
+        get
+        {
+            if (ToolChoice != null && ToolChoice.Type != StaticValues.CompletionStatics.ToolChoiceType.Function && ToolChoice.Function != null)
+            {
+                throw new ValidationException("You cannot choose another type besides \"function\" while ToolChoice.Function is not null.");
+            }
+
+            if (ToolChoice?.Type == StaticValues.CompletionStatics.ToolChoiceType.Function)
+            {
+                return ToolChoice;
+            }
+
+            return ToolChoice?.Type;
+        }
+    }
+
+    /// <summary>
+    ///     The format that the model must output. Used to enable JSON mode.
+    ///     Must be one of "text" or "json_object".<br />
+    ///     <see cref="StaticValues.CompletionStatics.ResponseFormat" /><br />
+    ///     <example>
+    ///         Sample Usage:<br />
+    ///         new ResponseFormat { Type = StaticValues.CompletionStatics.ResponseFormat.Json }
+    ///     </example>
+    /// </summary>
+    [JsonPropertyName("response_format")]
+    public ResponseFormat? ResponseFormat { get; set; }
+
+    /// <summary>
+    ///     The format that the model must output. Used to enable JSON mode.
+    ///     Must be one of "text" or "json_object".
+    /// </summary>
+    /// <example>
+    ///     This example shows how to set the ChatResponseFormat to JSON:
+    ///     <code>
+    ///         var chatResponse = new ChatResponse
+    ///         {
+    ///             ChatResponseFormat = ChatResponseFormats.Json
+    ///         };
+    ///     </code>
+    /// </example>
+    /// <exception cref="ArgumentOutOfRangeException">
+    ///     Thrown when an unsupported <see cref="ResponseFormats" /> value is provided.
+    /// </exception>
+    /// <exception cref="ValidationException">
+    ///     Thrown when <see cref="ResponseFormat" /> is already set.
+    /// </exception>
+    [JsonIgnore]
+    public ResponseFormats? ChatResponseFormat
+    {
+        set
+        {
+            if (value == null) return;
+            if (ResponseFormat?.Type != null)
+            {
+                throw new ValidationException("ResponseFormat and ChatResponseFormat can not be assigned at the same time. One of them is should be null.");
+            }
+
+            ResponseFormat = new ResponseFormat
+            {
+                Type = value switch
+                {
+                    ResponseFormats.Json => StaticValues.CompletionStatics.ResponseFormat.Json,
+                    ResponseFormats.Text => StaticValues.CompletionStatics.ResponseFormat.Text,
+                    _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
+                }
+            };
+        }
+    }
+
+    /// <summary>
+    ///     This feature is in Beta. If specified, our system will make a best effort to sample deterministically, such that
+    ///     repeated requests with the same seed and parameters should return the same result. Determinism is not guaranteed,
+    ///     and you should refer to the system_fingerprint response parameter to monitor changes in the backend.
+    /// </summary>
+    [JsonPropertyName("seed")]
+    public int? Seed { get; set; }
 
     /// <summary>
     ///     ID of the model to use. For models supported see <see cref="OpenAI.ObjectModels.Models" /> start with <c>Gpt_</c>
